@@ -407,11 +407,26 @@ function CommentsResults({ data }: { data: Record<string, unknown> }) {
   return (
     <div className="space-y-4">
       <div className="p-4 bg-muted rounded-lg">
-        <h3 className="font-medium text-foreground">{meta.title}</h3>
-        <div className="text-sm text-muted-foreground mt-1">
-          {meta.author} • {formatNumber(meta.score || 0)} points • {totalComments} comments
-          {meta.created_utc && ` • ${formatTimestamp(meta.created_utc)}`}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <a
+              href={`https://reddit.com${meta.permalink}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:text-reddit"
+            >
+              {meta.title}
+            </a>
+            <div className="text-sm text-muted-foreground mt-1">
+              r/{meta.subreddit} • u/{meta.author} • {formatNumber(meta.score || 0)} points • {totalComments} comments
+              {meta.created_utc && ` • ${formatTimestamp(meta.created_utc)}`}
+            </div>
+          </div>
+          {meta.nsfw && <Badge variant="destructive">NSFW</Badge>}
         </div>
+        {meta.selftext && (
+          <p className="text-sm text-muted-foreground mt-3 line-clamp-3">{meta.selftext}</p>
+        )}
       </div>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
