@@ -1,10 +1,13 @@
 """Reddit scraper service using PRAW."""
 
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import praw
 from praw.models import Comment, Submission
+
+logger = logging.getLogger(__name__)
 
 
 def convert_timestamp(raw_timestamp: float) -> str:
@@ -155,7 +158,8 @@ class ScraperService:
                 "is_gold": getattr(redditor, "is_gold", False),
                 "is_mod": getattr(redditor, "is_mod", False),
             }
-        except Exception:
+        except Exception as e:
+            logger.error(f"Failed to fetch redditor info for u/{username}: {e}")
             redditor_info = {"name": username, "error": "Could not fetch profile info"}
 
         # Get submissions and comments
@@ -175,6 +179,7 @@ class ScraperService:
                         f"Scraped {i + 1} submissions",
                     )
         except Exception as e:
+            logger.error(f"Failed to fetch submissions for u/{username}: {e}")
             submissions = [{"error": str(e)}]
 
         if progress_callback:
@@ -190,6 +195,7 @@ class ScraperService:
                         f"Scraped {i + 1} comments",
                     )
         except Exception as e:
+            logger.error(f"Failed to fetch comments for u/{username}: {e}")
             comments = [{"error": str(e)}]
 
         return {

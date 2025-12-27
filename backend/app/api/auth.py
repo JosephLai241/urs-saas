@@ -1,10 +1,13 @@
 """Authentication API endpoints."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from app.database import get_supabase_client
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -47,7 +50,7 @@ async def login(request: LoginRequest):
                 },
             )
     except Exception as e:
-        pass
+        logger.error(f"Login failed for {request.email}: {e}")
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -87,6 +90,7 @@ async def signup(request: SignupRequest):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Signup failed for {request.email}: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
