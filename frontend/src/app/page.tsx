@@ -77,7 +77,7 @@ export default function HomePage() {
           />
           <FeatureCard
             title="Comment Analysis"
-            description="Extract and analyze comment threads with full tree structure or flat format."
+            description="Extract and analyze comment threads with full tree structure preserved."
             icon="💬"
           />
         </div>
