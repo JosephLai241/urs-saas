@@ -47,7 +47,7 @@ export default function HomePage() {
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
             Scrape subreddits, user profiles, and comments with ease.
-            Analyze data, generate insights, and export in multiple formats.
+            Analyze data, generate insights, and export to JSON.
           </p>
           <div className="flex items-center justify-center space-x-4">
             <Link href={user ? '/dashboard' : '/signup'}>
@@ -89,8 +89,8 @@ export default function HomePage() {
             icon="⚡"
           />
           <FeatureCard
-            title="Export Options"
-            description="Export your data as JSON, Markdown, or PDF for easy sharing and analysis."
+            title="JSON Export"
+            description="Export your scraped data as JSON for easy integration with other tools and analysis."
             icon="📤"
           />
           <FeatureCard
