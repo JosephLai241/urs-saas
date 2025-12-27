@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import * as api from '@/lib/api'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDate, formatNumber, formatTimestamp, truncateText } from '@/lib/utils'
@@ -37,6 +38,22 @@ export default function SharedResultPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleExport = () => {
+    if (!result) return
+
+    const jsonContent = JSON.stringify(result.result_data, null, 2)
+    const blob = new Blob([jsonContent], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `urs_export_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   if (isLoading) {
@@ -91,19 +108,26 @@ export default function SharedResultPage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader>
-            <CardTitle>
-              {result.job_type === 'subreddit' && `r/${(result.config as any).subreddit}`}
-              {result.job_type === 'redditor' && `u/${(result.config as any).username}`}
-              {result.job_type === 'comments' && truncateText(
-                (result.result_data?.data as any)?.submission_metadata?.title || 'Comment Thread',
-                50
-              )}
-            </CardTitle>
-            <CardDescription>
-              {result.job_type.charAt(0).toUpperCase() + result.job_type.slice(1)} scrape
-              {result.job_type === 'subreddit' && ` • ${(result.config as any).category}`}
-              {' • '}Scraped {formatDate(result.created_at)}
-            </CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>
+                  {result.job_type === 'subreddit' && `r/${(result.config as any).subreddit}`}
+                  {result.job_type === 'redditor' && `u/${(result.config as any).username}`}
+                  {result.job_type === 'comments' && truncateText(
+                    (result.result_data?.data as any)?.submission_metadata?.title || 'Comment Thread',
+                    50
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {result.job_type.charAt(0).toUpperCase() + result.job_type.slice(1)} scrape
+                  {result.job_type === 'subreddit' && ` • ${(result.config as any).category}`}
+                  {' • '}Scraped {formatDate(result.created_at)}
+                </CardDescription>
+              </div>
+              <Button variant="reddit" size="sm" onClick={handleExport}>
+                Export JSON
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {result.job_type === 'subreddit' && (
