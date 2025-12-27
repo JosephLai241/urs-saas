@@ -1,0 +1,310 @@
+# Share & Export
+
+## Requirements
+
+> Implement at least one of:
+> * A read-only shareable link to view the structured output
+> * "Export to Markdown"
+> * "Export to PDF"
+>
+> This should work without requiring a login for the viewer (use public token or signed URL).
+
+**Implementation:** All three features are implemented.
+
+---
+
+## 1. Read-Only Shareable Links
+
+### How It Works
+
+1. User clicks "Share" on a completed job
+2. Backend generates a unique token and stores it in `share_links` table
+3. User receives a public URL like `/share/abc123...`
+4. Anyone with the link can view results (no login required)
+
+### Backend Implementation
+
+**Create Share Link:** `backend/app/api/share.py`
+
+```python
+@router.post("/{job_id}/share", response_model=ShareLinkResponse)
+async def create_share_link(job_id: str, user: User = Depends(get_current_user)):
+    # Generate unique token
+    share_token = secrets.token_urlsafe(32)
+
+    # Store in database
+    result = supabase.table("share_links").insert({
+        "job_id": job_id,
+        "share_token": share_token,
+        "is_active": True,
+    }).execute()
+
+    # Return full URL
+    return ShareLinkResponse(
+        url=f"{settings.frontend_url}/share/{share_token}",
+        ...
+    )
+```
+
+**Public Access Endpoint:**
+
+```python
+@router.get("/{share_token}", response_model=SharedResultResponse)
+async def get_shared_result(share_token: str):
+    # No authentication required!
+    # Look up token in database
+    share_result = supabase.table("share_links").select("*").eq(
+        "share_token", share_token
+    ).eq("is_active", True).execute()
+
+    # Return job results
+    return SharedResultResponse(
+        job_type=job["job_type"],
+        config=job["config"],
+        result_data=job["result_data"],
+        created_at=job["created_at"],
+    )
+```
+
+### Frontend Implementation
+
+**Share Page:** `frontend/src/app/share/[token]/page.tsx`
+
+- Public page (no auth required)
+- Displays results using same components as authenticated view
+- Shows "Shared via URS" branding
+- Includes JSON export button for convenience
+
+```typescript
+// No useAuth() hook - page is fully public
+export default function SharedResultPage() {
+  const params = useParams()
+  const token = params.token as string
+
+  useEffect(() => {
+    if (token) {
+      loadResult()  // Fetches from public endpoint
+    }
+  }, [token])
+  // ...
+}
+```
+
+---
+
+## 2. Export to Markdown
+
+### Backend Implementation
+
+**File:** `backend/app/services/export.py:19-128`
+
+Generates structured Markdown with:
+- Header with scrape metadata
+- Formatted lists of posts/comments
+- Blockquotes for selftext/comment bodies
+- Links to Reddit
+
+```python
+def to_markdown(self, job: dict) -> Tuple[bytes, str, str]:
+    lines = []
+
+    if job_type == "subreddit":
+        lines.append(f"# Subreddit Scrape: r/{config.get('subreddit')}")
+        lines.append(f"**Category:** {config.get('category')}")
+        # ...
+
+        for i, post in enumerate(result_data.get("data", []), 1):
+            lines.append(f"## {i}. {post.get('title')}")
+            lines.append(f"- **Author:** {post.get('author')}")
+            lines.append(f"- **Score:** {post.get('score')}")
+            # ...
+
+    content = "\n".join(lines)
+    return content.encode("utf-8"), "text/markdown", filename
+```
+
+### Sample Output
+
+```markdown
+# Subreddit Scrape: r/python
+
+**Category:** hot
+**Limit:** 25
+**Scraped:** 2024-01-15T10:30:00Z
+
+---
+
+## 1. My first Python project
+
+- **Author:** pythondev123
+- **Score:** 1542
+- **Comments:** 89
+- **Created:** 2024-01-15T08:00:00Z
+- **URL:** https://reddit.com/r/python/comments/...
+
+> I just finished my first Python project and wanted to share...
+
+---
+```
+
+---
+
+## 3. Export to PDF
+
+### Backend Implementation
+
+**File:** `backend/app/services/export.py:152-206`
+
+Uses:
+- `markdown2` - Convert Markdown to HTML
+- `weasyprint` - Render HTML to PDF
+
+```python
+def to_pdf(self, job: dict) -> Tuple[bytes, str, str]:
+    try:
+        import markdown2
+        from weasyprint import HTML
+    except ImportError:
+        # Fallback to markdown if PDF libs not available
+        return self.to_markdown(job)
+
+    # Convert markdown to HTML
+    md_content, _, _ = self.to_markdown(job)
+    html_content = markdown2.markdown(md_content.decode("utf-8"))
+
+    # Wrap in styled HTML with CSS
+    styled_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: -apple-system, ...; }}
+            h1 {{ color: #1a1a1a; border-bottom: 2px solid #ff4500; }}
+            blockquote {{ border-left: 4px solid #ff4500; }}
+            /* ... */
+        </style>
+    </head>
+    <body>{html_content}</body>
+    </html>
+    """
+
+    pdf_bytes = HTML(string=styled_html).write_pdf()
+    return pdf_bytes, "application/pdf", filename
+```
+
+### PDF Styling
+
+- Reddit orange accent color (#ff4500)
+- Clean sans-serif typography
+- Proper heading hierarchy
+- Styled blockquotes for content
+- Footer with "Generated by URS SAAS"
+
+### Docker Dependencies
+
+**File:** `backend/Dockerfile`
+
+```dockerfile
+# Install WeasyPrint system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-xlib-2.0-0 \
+    libffi-dev \
+    shared-mime-info
+```
+
+---
+
+## Export API
+
+**Endpoint:** `GET /api/jobs/{job_id}/export?format={json|markdown|pdf}`
+
+**File:** `backend/app/api/jobs.py:142-186`
+
+```python
+@router.get("/{job_id}/export")
+async def export_job(
+    job_id: str,
+    format: ExportFormat = "json",
+    user: User = Depends(get_current_user_from_token_or_query),
+):
+    export_service = ExportService()
+
+    if format == "json":
+        content, media_type, filename = export_service.to_json(job)
+    elif format == "markdown":
+        content, media_type, filename = export_service.to_markdown(job)
+    elif format == "pdf":
+        content, media_type, filename = export_service.to_pdf(job)
+
+    return StreamingResponse(
+        iter([content]),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+```
+
+### Authentication Flexibility
+
+The export endpoint supports both:
+- Bearer token in header (standard API calls)
+- Token in query parameter (for direct browser downloads)
+
+```python
+async def get_current_user_from_token_or_query(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    token: Optional[str] = Query(None),
+) -> User:
+    if credentials and credentials.credentials:
+        return verify_token(credentials.credentials)
+    if token:
+        return verify_token(token)
+    raise HTTPException(status_code=401, detail="Not authenticated")
+```
+
+---
+
+## Frontend Export UI
+
+**File:** `frontend/src/app/jobs/[id]/page.tsx:217-231`
+
+```typescript
+{job.status === 'completed' && (
+  <div className="flex space-x-2">
+    <Button variant="outline" size="sm" onClick={handleShare}>
+      Share
+    </Button>
+    <Button variant="outline" size="sm" onClick={() => handleExport('json')}>
+      JSON
+    </Button>
+    <Button variant="outline" size="sm" onClick={() => handleExport('markdown')}>
+      Markdown
+    </Button>
+    <Button variant="reddit" size="sm" onClick={() => handleExport('pdf')}>
+      PDF
+    </Button>
+  </div>
+)}
+```
+
+---
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `backend/app/api/share.py` | Share link creation & public access |
+| `backend/app/services/export.py` | JSON/Markdown/PDF generation |
+| `backend/app/api/jobs.py` | Export endpoint |
+| `frontend/src/app/share/[token]/page.tsx` | Public share viewer |
+| `frontend/src/app/jobs/[id]/page.tsx` | Export buttons |
+
+---
+
+## Security Considerations
+
+1. **Share tokens are cryptographically random** - `secrets.token_urlsafe(32)`
+2. **Tokens can be deactivated** - `is_active` flag in database
+3. **Read-only access** - Shared links only allow viewing, not modification
+4. **No sensitive data exposed** - Only job results, not user credentials
