@@ -3,13 +3,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from cryptography.fernet import Fernet
 
-from app.auth import get_current_user, User
+from app.auth import get_current_user, User, DEMO_USER_ID
 from app.config import get_settings
 from app.database import get_supabase_client
 from app.models import ProfileResponse, ProfileUpdate
 
 
 router = APIRouter()
+
+
+def is_demo_user(user: User) -> bool:
+    """Check if the user is the demo user."""
+    return user.id == DEMO_USER_ID
 
 
 def get_cipher():
@@ -33,6 +38,14 @@ def decrypt_value(value: str) -> str:
 @router.get("", response_model=ProfileResponse)
 async def get_profile(user: User = Depends(get_current_user)):
     """Get current user profile."""
+    # Demo user gets a mock profile
+    if is_demo_user(user):
+        return ProfileResponse(
+            id=user.id,
+            email=user.email,
+            has_reddit_credentials=False,
+        )
+
     supabase = get_supabase_client()
 
     # Get or create profile
@@ -63,6 +76,13 @@ async def update_profile(
     user: User = Depends(get_current_user),
 ):
     """Update user profile (including Reddit credentials)."""
+    # Demo user cannot update profile
+    if is_demo_user(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo user cannot update profile",
+        )
+
     supabase = get_supabase_client()
 
     update_data = {}
@@ -88,6 +108,13 @@ async def update_profile(
 @router.get("/reddit-credentials")
 async def get_reddit_credentials(user: User = Depends(get_current_user)):
     """Get decrypted Reddit credentials (for internal use)."""
+    # Demo user has no Reddit credentials
+    if is_demo_user(user):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reddit credentials not configured",
+        )
+
     supabase = get_supabase_client()
 
     result = supabase.table("user_profiles").select("*").eq("id", user.id).execute()

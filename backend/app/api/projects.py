@@ -3,12 +3,17 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.auth import get_current_user, User
+from app.auth import get_current_user, User, DEMO_USER_ID
 from app.database import get_supabase_client
 from app.models import ProjectCreate, ProjectResponse, ProjectUpdate, JobCreate, JobResponse, JobCounts
 
 
 router = APIRouter()
+
+
+def is_demo_user(user: User) -> bool:
+    """Check if the user is the demo user."""
+    return user.id == DEMO_USER_ID
 
 
 def _calculate_job_counts(jobs: list) -> JobCounts:
@@ -30,6 +35,10 @@ def _calculate_job_counts(jobs: list) -> JobCounts:
 @router.get("", response_model=List[ProjectResponse])
 async def list_projects(user: User = Depends(get_current_user)):
     """List all projects for current user."""
+    # Demo user gets empty project list
+    if is_demo_user(user):
+        return []
+
     supabase = get_supabase_client()
 
     # Get projects
@@ -75,6 +84,13 @@ async def create_project(
     user: User = Depends(get_current_user),
 ):
     """Create a new project."""
+    # Demo user cannot create projects
+    if is_demo_user(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo user cannot create projects. Please sign up for a real account.",
+        )
+
     supabase = get_supabase_client()
 
     result = supabase.table("projects").insert({
