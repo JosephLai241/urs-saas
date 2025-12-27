@@ -1,5 +1,6 @@
 """Authentication utilities."""
 
+import logging
 from typing import Optional
 from datetime import datetime, timedelta
 
@@ -10,6 +11,8 @@ from pydantic import BaseModel
 
 from app.config import get_settings
 from app.database import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 
 security = HTTPBearer()
@@ -51,11 +54,14 @@ def verify_token(token: str) -> User:
         email: str = payload.get("email")
 
         if user_id is None:
+            logger.error("Token verification failed: no 'sub' claim in payload")
             raise credentials_exception
 
+        logger.info(f"Token verified for user: {user_id}")
         return User(id=user_id, email=email or "")
 
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT verification failed: {e}")
         raise credentials_exception
 
 
