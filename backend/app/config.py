@@ -38,10 +38,6 @@ class Settings(BaseSettings):
     # Encryption key for Reddit credentials
     encryption_key: str
 
-    # Demo auth (optional)
-    demo_username: str = "demo"
-    demo_password: str = "demo123"
-
 
 @lru_cache()
 def get_settings() -> Settings:

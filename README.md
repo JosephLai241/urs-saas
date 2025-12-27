@@ -4,7 +4,7 @@ A web-based SAAS platform built around the [URS (Universal Reddit Scraper)](http
 
 ## Features
 
-- **Authentication**: Email/password login with demo mode support
+- **Authentication**: Email/password login via Supabase
 - **Project Management**: Organize scrapes into projects
 - **Scraping Types**:
   - **Subreddit**: Hot, New, Top, Rising, Controversial posts
@@ -161,12 +161,6 @@ npm run dev
 
 The app will be available at http://localhost:3000
 
-### Demo Login
-
-Use these credentials to test without setting up Supabase auth:
-- Email: `demo`
-- Password: `demo123`
-
 ## Deployment
 
 ### Backend (Railway)
@@ -218,11 +212,9 @@ Use these credentials to test without setting up Supabase auth:
 
 2. **SQLite-compatible Schema**: While using Supabase (PostgreSQL), the schema is kept simple enough to work with SQLite for local development.
 
-3. **Demo Auth Mode**: Added hardcoded demo credentials to allow quick testing without Supabase setup.
+3. **Polling for Progress**: Frontend polls job status every 2 seconds instead of using WebSockets. Simpler implementation, slightly more server load.
 
-4. **Polling for Progress**: Frontend polls job status every 2 seconds instead of using WebSockets. Simpler implementation, slightly more server load.
-
-5. **Server-side PDF Generation**: PDFs are generated on the backend using WeasyPrint. Could be moved to client-side for reduced server load.
+4. **Server-side PDF Generation**: PDFs are generated on the backend using WeasyPrint. Could be moved to client-side for reduced server load.
 
 ### Future Improvements
 

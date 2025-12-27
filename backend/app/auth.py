@@ -4,16 +4,13 @@ import logging
 import httpx
 from functools import lru_cache
 from typing import Optional
-from datetime import datetime, timedelta
 
-from fastapi import Depends, HTTPException, status, Query, Request
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt, jwk
-from jose.utils import base64url_decode
 from pydantic import BaseModel
 
 from app.config import get_settings
-from app.database import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +20,6 @@ def get_supabase_jwks():
     """Fetch and cache the Supabase JWKS (JSON Web Key Set)."""
     settings = get_settings()
     jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
-    logger.info(f"Fetching JWKS from: {jwks_url}")
-
     response = httpx.get(jwks_url)
     response.raise_for_status()
     return response.json()
@@ -62,7 +57,6 @@ def verify_token(token: str) -> User:
         unverified_header = jwt.get_unverified_header(token)
         token_alg = unverified_header.get("alg", "unknown")
         token_kid = unverified_header.get("kid")
-        logger.info(f"Token algorithm: {token_alg}, kid: {token_kid}")
 
         # For ES256 (asymmetric), use JWKS from Supabase
         if token_alg == "ES256":
@@ -104,7 +98,6 @@ def verify_token(token: str) -> User:
             logger.error("Token verification failed: no 'sub' claim in payload")
             raise credentials_exception
 
-        logger.info(f"Token verified for user: {user_id}")
         return User(id=user_id, email=email or "")
 
     except JWTError as e:
@@ -137,36 +130,3 @@ async def get_current_user_from_token_or_query(
         detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-
-# Simplified auth for demo mode
-# Use a valid UUID for demo user so it works with Supabase
-DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
-DEMO_USER_EMAIL = "demo@example.com"
-
-
-class DemoUser(BaseModel):
-    """Demo user for simplified auth."""
-    id: str = DEMO_USER_ID
-    email: str = DEMO_USER_EMAIL
-
-
-def create_demo_token(username: str, password: str) -> Optional[str]:
-    """Create a demo JWT token for simplified auth."""
-    settings = get_settings()
-
-    # Check demo credentials (fallback if Supabase not configured)
-    demo_username = getattr(settings, "demo_username", "demo")
-    demo_password = getattr(settings, "demo_password", "demo123")
-
-    if username == demo_username and password == demo_password:
-        expire = datetime.utcnow() + timedelta(days=7)
-        to_encode = {
-            "sub": DEMO_USER_ID,
-            "email": DEMO_USER_EMAIL,
-            "exp": expire,
-            "aud": "authenticated",
-        }
-        return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
-
-    return None

@@ -3,7 +3,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from app.auth import create_demo_token, DEMO_USER_ID, DEMO_USER_EMAIL
 from app.database import get_supabase_client
 
 
@@ -32,15 +31,6 @@ class SignupRequest(BaseModel):
 @router.post("/login", response_model=LoginResponse)
 async def login(request: LoginRequest):
     """Login with email and password."""
-    # Try demo login first
-    demo_token = create_demo_token(request.email, request.password)
-    if demo_token:
-        return LoginResponse(
-            access_token=demo_token,
-            user={"id": DEMO_USER_ID, "email": DEMO_USER_EMAIL},
-        )
-
-    # Try Supabase auth
     try:
         supabase = get_supabase_client()
         response = supabase.auth.sign_in_with_password({

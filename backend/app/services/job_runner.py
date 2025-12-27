@@ -1,6 +1,7 @@
 """Background job runner service."""
 
 import asyncio
+import logging
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -12,6 +13,8 @@ import prawcore.exceptions
 from app.database import get_supabase_client
 from app.api.profile import decrypt_value
 from app.services.scraper import ScraperService
+
+logger = logging.getLogger(__name__)
 
 # Thread pool for running synchronous scraper code
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -222,9 +225,9 @@ async def run_scrape_job(job_id: str, user_id: str):
     except Exception as e:
         # Job failed - format error with user-friendly context
         error_message = _format_error_message(e)
-        print(f"Job {job_id} failed: {error_message}")
-        print(f"Original exception: {type(e).__name__}: {str(e)}")
-        print(traceback.format_exc())
+        logger.error(f"Job {job_id} failed: {error_message}")
+        logger.error(f"Original exception: {type(e).__name__}: {str(e)}")
+        logger.error(traceback.format_exc())
 
         supabase.table("scrape_jobs").update({
             "status": "failed",
