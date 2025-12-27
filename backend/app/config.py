@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # Supabase
     supabase_url: str
-    supabase_anon_key: str
+    supabase_anon_key: str = ""  # Optional - not used in backend
     supabase_service_key: str
 
     # JWT (using Supabase's JWT secret)
