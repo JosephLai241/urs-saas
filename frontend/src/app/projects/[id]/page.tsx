@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import * as api from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDate, truncateText } from '@/lib/utils'
@@ -70,6 +71,8 @@ export default function ProjectPage() {
   const [project, setProject] = useState<api.Project | null>(null)
   const [jobs, setJobs] = useState<api.Job[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
+  const [editDescription, setEditDescription] = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -122,6 +125,28 @@ export default function ProjectPage() {
     }
   }
 
+  const handleEditDescription = () => {
+    setEditDescription(project?.description || '')
+    setIsEditingDescription(true)
+  }
+
+  const handleSaveDescription = async () => {
+    if (!token || !project) return
+
+    try {
+      const updated = await api.updateProject(token, project.id, { description: editDescription })
+      setProject(updated)
+      setIsEditingDescription(false)
+    } catch (error) {
+      console.error('Failed to update project:', error)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditingDescription(false)
+    setEditDescription('')
+  }
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -166,7 +191,35 @@ export default function ProjectPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{project?.name}</h1>
-            <p className="text-muted-foreground">{project?.description || 'Manage scrape jobs for this project'}</p>
+            {isEditingDescription ? (
+              <div className="mt-2 flex items-center space-x-2">
+                <Input
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Add a project description..."
+                  className="w-80"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveDescription()
+                    if (e.key === 'Escape') handleCancelEdit()
+                  }}
+                />
+                <Button size="sm" variant="reddit" onClick={handleSaveDescription}>
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <p
+                className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                onClick={handleEditDescription}
+                title="Click to edit description"
+              >
+                {project?.description || 'No description (click to add)'}
+              </p>
+            )}
           </div>
           <Link href={`/scrape/new?project=${projectId}`}>
             <Button variant="reddit">New Scrape</Button>

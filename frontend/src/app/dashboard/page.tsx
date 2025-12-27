@@ -21,8 +21,6 @@ export default function DashboardPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCredentials, setHasCredentials] = useState<boolean | null>(null)
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
-  const [editDescription, setEditDescription] = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -78,28 +76,6 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Failed to delete project:', error)
     }
-  }
-
-  const handleEditDescription = (project: api.Project) => {
-    setEditingProjectId(project.id)
-    setEditDescription(project.description || '')
-  }
-
-  const handleSaveDescription = async (projectId: string) => {
-    if (!token) return
-
-    try {
-      const updated = await api.updateProject(token, projectId, { description: editDescription })
-      setProjects(projects.map(p => p.id === projectId ? updated : p))
-      setEditingProjectId(null)
-    } catch (error) {
-      console.error('Failed to update project:', error)
-    }
-  }
-
-  const handleCancelEdit = () => {
-    setEditingProjectId(null)
-    setEditDescription('')
   }
 
   if (authLoading || !user) {
@@ -186,39 +162,11 @@ export default function DashboardPage() {
               <Card key={project.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
+                    <div>
                       <CardTitle className="text-lg">{project.name}</CardTitle>
-                      {editingProjectId === project.id ? (
-                        <div className="mt-1 flex items-center space-x-2">
-                          <Input
-                            value={editDescription}
-                            onChange={(e) => setEditDescription(e.target.value)}
-                            placeholder="Add a description..."
-                            className="text-sm h-8"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveDescription(project.id)
-                              if (e.key === 'Escape') handleCancelEdit()
-                            }}
-                          />
-                          <Button size="sm" variant="reddit" onClick={() => handleSaveDescription(project.id)}>
-                            Save
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <CardDescription
-                          className="cursor-pointer hover:text-foreground transition-colors"
-                          onClick={() => handleEditDescription(project)}
-                          title="Click to edit description"
-                        >
-                          {project.description || 'No description (click to add)'}
-                        </CardDescription>
-                      )}
+                      <CardDescription>{project.description || 'No description'}</CardDescription>
                     </div>
-                    <Badge variant="secondary" className="ml-2 flex-shrink-0">{project.job_count} jobs</Badge>
+                    <Badge variant="secondary">{project.job_count} jobs</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
