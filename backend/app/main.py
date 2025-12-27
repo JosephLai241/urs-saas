@@ -5,8 +5,9 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Dict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -72,6 +73,15 @@ def create_app() -> FastAPI:
     async def health_check():
         """Health check endpoint."""
         return {"status": "healthy", "app": settings.app_name}
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Global exception handler to ensure CORS headers on errors."""
+        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
+        )
 
     return app
 
