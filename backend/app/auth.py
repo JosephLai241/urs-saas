@@ -1,18 +1,33 @@
 """Authentication utilities."""
 
 import logging
+import httpx
+from functools import lru_cache
 from typing import Optional
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+from jose import JWTError, jwt, jwk
+from jose.utils import base64url_decode
 from pydantic import BaseModel
 
 from app.config import get_settings
 from app.database import get_supabase_client
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache()
+def get_supabase_jwks():
+    """Fetch and cache the Supabase JWKS (JSON Web Key Set)."""
+    settings = get_settings()
+    jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+    logger.info(f"Fetching JWKS from: {jwks_url}")
+
+    response = httpx.get(jwks_url)
+    response.raise_for_status()
+    return response.json()
 
 
 security = HTTPBearer()
@@ -44,17 +59,44 @@ def verify_token(token: str) -> User:
 
     try:
         # First, decode without verification to see the header
-        unverified = jwt.get_unverified_header(token)
-        token_alg = unverified.get("alg", "unknown")
-        logger.info(f"Token algorithm: {token_alg}, expected: {settings.jwt_algorithm}")
+        unverified_header = jwt.get_unverified_header(token)
+        token_alg = unverified_header.get("alg", "unknown")
+        token_kid = unverified_header.get("kid")
+        logger.info(f"Token algorithm: {token_alg}, kid: {token_kid}")
 
-        # Decode the Supabase JWT
-        payload = jwt.decode(
-            token,
-            settings.jwt_secret,
-            algorithms=[settings.jwt_algorithm],
-            audience="authenticated",
-        )
+        # For ES256 (asymmetric), use JWKS from Supabase
+        if token_alg == "ES256":
+            jwks = get_supabase_jwks()
+
+            # Find the key that matches the token's kid
+            key_data = None
+            for key in jwks.get("keys", []):
+                if key.get("kid") == token_kid:
+                    key_data = key
+                    break
+
+            if not key_data:
+                logger.error(f"No matching key found for kid: {token_kid}")
+                raise credentials_exception
+
+            # Construct the public key
+            public_key = jwk.construct(key_data)
+
+            payload = jwt.decode(
+                token,
+                public_key,
+                algorithms=["ES256"],
+                audience="authenticated",
+            )
+        else:
+            # For HS256 (symmetric), use the JWT secret
+            payload = jwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm],
+                audience="authenticated",
+            )
+
         user_id: str = payload.get("sub")
         email: str = payload.get("email")
 
