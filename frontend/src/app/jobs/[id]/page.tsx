@@ -108,10 +108,10 @@ export default function JobPage() {
     }
   }
 
-  const handleExport = () => {
+  const handleExport = (format: api.ExportFormat) => {
     if (!token) return
-    const url = api.getExportUrl(token, jobId)
-    window.open(`${url}&token=${token}`, '_blank')
+    const url = api.getExportUrl(token, jobId, format)
+    window.open(url, '_blank')
   }
 
   const handleRetry = async () => {
@@ -219,8 +219,14 @@ export default function JobPage() {
                       <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing}>
                         {isSharing ? 'Creating...' : 'Share'}
                       </Button>
-                      <Button variant="reddit" size="sm" onClick={handleExport}>
-                        Export JSON
+                      <Button variant="outline" size="sm" onClick={() => handleExport('json')}>
+                        JSON
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleExport('markdown')}>
+                        Markdown
+                      </Button>
+                      <Button variant="reddit" size="sm" onClick={() => handleExport('pdf')}>
+                        PDF
                       </Button>
                     </div>
                   )}

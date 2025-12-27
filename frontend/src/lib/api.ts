@@ -109,6 +109,14 @@ export async function deleteProject(token: string, projectId: string) {
   })
 }
 
+export async function updateProject(token: string, projectId: string, data: { name?: string; description?: string }) {
+  return fetchAPI<Project>(`/api/projects/${projectId}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(data),
+  })
+}
+
 // Jobs
 export type JobType = 'subreddit' | 'redditor' | 'comments'
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
@@ -180,6 +188,8 @@ export async function getSharedResult(token: string) {
 }
 
 // Export
-export function getExportUrl(token: string, jobId: string) {
-  return `${API_URL}/api/jobs/${jobId}/export?format=json&token=${token}`
+export type ExportFormat = 'json' | 'markdown' | 'pdf'
+
+export function getExportUrl(token: string, jobId: string, format: ExportFormat = 'json') {
+  return `${API_URL}/api/jobs/${jobId}/export?format=${format}&token=${token}`
 }

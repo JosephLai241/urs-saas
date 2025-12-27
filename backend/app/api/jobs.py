@@ -167,7 +167,15 @@ async def export_job(
         )
 
     export_service = ExportService()
-    content, media_type, filename = export_service.to_json(job)
+
+    if format == "json":
+        content, media_type, filename = export_service.to_json(job)
+    elif format == "markdown":
+        content, media_type, filename = export_service.to_markdown(job)
+    elif format == "pdf":
+        content, media_type, filename = export_service.to_pdf(job)
+    else:
+        content, media_type, filename = export_service.to_json(job)
 
     return StreamingResponse(
         iter([content]),

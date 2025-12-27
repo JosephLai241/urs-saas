@@ -89,8 +89,8 @@ export default function HomePage() {
             icon="⚡"
           />
           <FeatureCard
-            title="JSON Export"
-            description="Export your scraped data as JSON for easy integration with other tools and analysis."
+            title="Multiple Exports"
+            description="Export your scraped data as JSON, Markdown, or PDF for easy sharing and analysis."
             icon="📤"
           />
           <FeatureCard
