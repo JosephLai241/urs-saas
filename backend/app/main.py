@@ -1,11 +1,16 @@
 """FastAPI main application."""
 
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from app.config import get_settings
 from app.api import projects, jobs, share, profile, auth as auth_api
