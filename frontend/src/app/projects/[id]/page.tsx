@@ -20,24 +20,45 @@ const statusColors: Record<api.JobStatus, string> = {
 }
 
 const jobTypeLabels: Record<api.JobType, string> = {
-  subreddit: 'Subreddit',
-  redditor: 'Redditor',
-  comments: 'Comments',
+  subreddit: 'Subreddit Scrape',
+  redditor: 'Redditor Scrape',
+  comments: 'Comments Scrape',
 }
 
-function getCommentsTitle(job: api.Job): string {
-  // Try to get title from result data (for completed jobs)
-  const title = (job.result_data?.data as any)?.submission_metadata?.title
-  if (title) {
-    return truncateText(title, 50)
+function getJobTarget(job: api.Job): string {
+  const config = job.config as any
+  switch (job.job_type) {
+    case 'subreddit':
+      return `r/${config.subreddit}`
+    case 'redditor':
+      return `u/${config.username}`
+    case 'comments':
+      // Try to get title from result data (for completed jobs)
+      const title = (job.result_data?.data as any)?.submission_metadata?.title
+      if (title) {
+        return truncateText(title, 60)
+      }
+      // Fallback to URL
+      return config.url ? truncateText(config.url, 60) : 'Comment Thread'
+    default:
+      return 'Unknown'
   }
-  // Fallback: extract subreddit from URL if possible
-  const url = (job.config as any)?.url || ''
-  const match = url.match(/\/r\/([^/]+)/)
-  if (match) {
-    return `r/${match[1]} post`
+}
+
+function getJobDetails(job: api.Job): string {
+  const config = job.config as any
+  switch (job.job_type) {
+    case 'subreddit':
+      const category = config.category?.charAt(0).toUpperCase() + config.category?.slice(1) || 'Hot'
+      return `Category: ${category} · Results: ${config.limit || 25}`
+    case 'redditor':
+      return `Results: ${config.limit || 25}`
+    case 'comments':
+      const limit = config.limit
+      return `Comments: ${!limit || limit === 0 ? 'All' : limit}`
+    default:
+      return ''
   }
-  return 'Comment Thread'
 }
 
 export default function ProjectPage() {
@@ -169,24 +190,27 @@ export default function ProjectPage() {
             {jobs.map((job) => (
               <Card key={job.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Badge variant={statusColors[job.status] as any}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4">
+                      <Badge variant={statusColors[job.status] as any} className="mt-1">
                         {job.status}
                       </Badge>
-                      <div>
+                      <div className="space-y-1">
+                        {/* Line 1: Scrape type (larger text) */}
                         <Link
                           href={`/jobs/${job.id}`}
-                          className="font-medium hover:text-reddit transition-colors"
+                          className="text-lg font-semibold hover:text-reddit transition-colors block"
                         >
-                          {jobTypeLabels[job.job_type]}:{' '}
-                          {job.job_type === 'subreddit' && `r/${(job.config as any).subreddit}`}
-                          {job.job_type === 'redditor' && `u/${(job.config as any).username}`}
-                          {job.job_type === 'comments' && getCommentsTitle(job)}
+                          {jobTypeLabels[job.job_type]}
                         </Link>
+                        {/* Line 2: Target */}
+                        <div className="text-foreground">
+                          {getJobTarget(job)}
+                        </div>
+                        {/* Line 3: Additional details */}
                         <div className="text-sm text-muted-foreground">
-                          Created {formatDate(job.created_at)}
-                          {job.status === 'running' && ` • ${job.progress}% complete`}
+                          {getJobDetails(job)} · Created {formatDate(job.created_at)}
+                          {job.status === 'running' && ` · ${job.progress}% complete`}
                         </div>
                       </div>
                     </div>
