@@ -42,7 +42,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="w-12 h-12 bg-reddit rounded-full flex items-center justify-center mx-auto mb-4">
@@ -54,7 +54,7 @@ export default function SignupPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md">
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
                 {error}
               </div>
             )}
@@ -99,7 +99,7 @@ export default function SignupPage() {
               {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link href="/login" className="text-reddit hover:underline">
                 Sign in
