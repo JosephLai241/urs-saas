@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from app.auth import create_demo_token
+from app.auth import create_demo_token, DEMO_USER_ID, DEMO_USER_EMAIL
 from app.database import get_supabase_client
 
 
@@ -37,7 +37,7 @@ async def login(request: LoginRequest):
     if demo_token:
         return LoginResponse(
             access_token=demo_token,
-            user={"id": "demo-user-id", "email": "demo@example.com"},
+            user={"id": DEMO_USER_ID, "email": DEMO_USER_EMAIL},
         )
 
     # Try Supabase auth

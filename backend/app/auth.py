@@ -87,10 +87,15 @@ async def get_current_user_from_token_or_query(
 
 
 # Simplified auth for demo mode
+# Use a valid UUID for demo user so it works with Supabase
+DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
+DEMO_USER_EMAIL = "demo@example.com"
+
+
 class DemoUser(BaseModel):
     """Demo user for simplified auth."""
-    id: str = "demo-user-id"
-    email: str = "demo@example.com"
+    id: str = DEMO_USER_ID
+    email: str = DEMO_USER_EMAIL
 
 
 def create_demo_token(username: str, password: str) -> Optional[str]:
@@ -104,8 +109,8 @@ def create_demo_token(username: str, password: str) -> Optional[str]:
     if username == demo_username and password == demo_password:
         expire = datetime.utcnow() + timedelta(days=7)
         to_encode = {
-            "sub": "demo-user-id",
-            "email": "demo@example.com",
+            "sub": DEMO_USER_ID,
+            "email": DEMO_USER_EMAIL,
             "exp": expire,
             "aud": "authenticated",
         }
