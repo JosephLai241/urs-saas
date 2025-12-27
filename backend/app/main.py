@@ -38,10 +38,19 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS middleware
+    # CORS middleware - build list of allowed origins
+    allowed_origins = [
+        "http://localhost:3000",
+        "https://urs-saas.vercel.app",
+        settings.frontend_url,
+        settings.frontend_url.rstrip("/"),  # Handle trailing slash
+    ]
+    # Remove duplicates and empty strings
+    allowed_origins = list(set(o for o in allowed_origins if o))
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url, "http://localhost:3000"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
