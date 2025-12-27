@@ -43,6 +43,11 @@ def verify_token(token: str) -> User:
     )
 
     try:
+        # First, decode without verification to see the header
+        unverified = jwt.get_unverified_header(token)
+        token_alg = unverified.get("alg", "unknown")
+        logger.info(f"Token algorithm: {token_alg}, expected: {settings.jwt_algorithm}")
+
         # Decode the Supabase JWT
         payload = jwt.decode(
             token,
