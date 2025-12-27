@@ -76,10 +76,6 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
-              Demo credentials: <code className="bg-muted px-1 rounded text-foreground">demo</code> / <code className="bg-muted px-1 rounded text-foreground">demo123</code>
-            </p>
-
-            <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-reddit hover:underline">
                 Sign up
