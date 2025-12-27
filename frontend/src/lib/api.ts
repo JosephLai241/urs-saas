@@ -180,6 +180,6 @@ export async function getSharedResult(token: string) {
 }
 
 // Export
-export function getExportUrl(token: string, jobId: string, format: 'json' | 'markdown' | 'pdf') {
-  return `${API_URL}/api/jobs/${jobId}/export?format=${format}&token=${token}`
+export function getExportUrl(token: string, jobId: string) {
+  return `${API_URL}/api/jobs/${jobId}/export?format=json&token=${token}`
 }

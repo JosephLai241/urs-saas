@@ -167,18 +167,7 @@ async def export_job(
         )
 
     export_service = ExportService()
-
-    if format == "json":
-        content, media_type, filename = export_service.to_json(job)
-    elif format == "markdown":
-        content, media_type, filename = export_service.to_markdown(job)
-    elif format == "pdf":
-        content, media_type, filename = export_service.to_pdf(job)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported format: {format}",
-        )
+    content, media_type, filename = export_service.to_json(job)
 
     return StreamingResponse(
         iter([content]),

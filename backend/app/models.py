@@ -149,7 +149,7 @@ class SharedResultResponse(BaseModel):
 
 # ============ Export ============
 
-ExportFormat = Literal["json", "markdown", "pdf"]
+ExportFormat = Literal["json"]
 
 
 class ExportRequest(BaseModel):
