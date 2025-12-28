@@ -2,9 +2,10 @@
 
 import logging
 
-from app.database import get_supabase_client
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
+
+from app.database import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

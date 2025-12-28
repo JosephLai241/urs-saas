@@ -2,6 +2,8 @@
 
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.auth import User, get_current_user
 from app.database import get_supabase_client
 from app.models import (
@@ -12,7 +14,6 @@ from app.models import (
     ProjectResponse,
     ProjectUpdate,
 )
-from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 

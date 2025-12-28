@@ -5,12 +5,13 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Dict
 
-from app.api import auth as auth_api
-from app.api import jobs, profile, projects, share
-from app.config import get_settings
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+from app.api import auth as auth_api
+from app.api import jobs, profile, projects, share
+from app.config import get_settings
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

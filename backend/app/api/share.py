@@ -3,11 +3,12 @@
 import secrets
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.auth import User, get_current_user
 from app.config import get_settings
 from app.database import get_supabase_client
 from app.models import SharedResultResponse, ShareLinkResponse
-from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 

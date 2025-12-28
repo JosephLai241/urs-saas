@@ -106,8 +106,8 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
               <span className="text-sm text-yellow-600 dark:text-yellow-400">
-                Reddit API credentials not configured. You won't be able to run
-                scrapes until you add them.
+                Reddit API credentials not configured. You will not be able to
+                run scrapes until you add them.
               </span>
             </div>
             <Link href="/settings">

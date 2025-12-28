@@ -8,6 +8,7 @@ from datetime import datetime
 from functools import partial
 
 import prawcore.exceptions
+
 from app.api.profile import decrypt_value
 from app.database import get_supabase_client
 from app.services.scraper import ScraperService

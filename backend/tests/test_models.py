@@ -1,6 +1,8 @@
 """Tests for Pydantic models."""
 
 import pytest
+from pydantic import ValidationError
+
 from app.models import (
     CommentsConfig,
     JobCounts,
@@ -13,7 +15,6 @@ from app.models import (
     ShareLinkResponse,
     SubredditConfig,
 )
-from pydantic import ValidationError
 
 
 class TestRedditCredentials:

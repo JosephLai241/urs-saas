@@ -1,6 +1,7 @@
 """Tests for API endpoint logic."""
 
 import pytest
+
 from app.models import (
     JobCreate,
     JobResponse,
@@ -137,8 +138,9 @@ class TestExportValidation:
 
     def test_export_format_invalid(self):
         """Test invalid export format raises error."""
-        from app.models import ExportRequest
         from pydantic import ValidationError
+
+        from app.models import ExportRequest
 
         with pytest.raises(ValidationError):
             ExportRequest(format="invalid")

@@ -6,11 +6,12 @@ from functools import lru_cache
 from typing import Optional
 
 import httpx
-from app.config import get_settings
 from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwk, jwt
 from pydantic import BaseModel
+
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
