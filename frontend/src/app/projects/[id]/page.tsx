@@ -241,13 +241,19 @@ export default function ProjectPage() {
                 </Button>
               </div>
             ) : (
-              <p
-                className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                onClick={handleEditDescription}
-                title="Click to edit description"
-              >
-                {project?.description || "No description (click to add)"}
-              </p>
+              <div className="flex items-center space-x-2 mt-1">
+                <p className="text-muted-foreground">
+                  {project?.description || (
+                    <span className="italic">No description</span>
+                  )}
+                </p>
+                <button
+                  onClick={handleEditDescription}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  (edit)
+                </button>
+              </div>
             )}
           </div>
           <Link href={`/scrape/new?project=${projectId}`}>
