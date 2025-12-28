@@ -64,7 +64,7 @@ function getJobDetails(job: api.Job): string {
       return `Results: ${config.limit || 25}`;
     case "comments":
       const limit = config.limit;
-      return `Comments: ${!limit || limit === 0 ? "All" : limit}`;
+      return `Number of comments: ${!limit || limit === 0 ? "All" : limit}`;
     default:
       return "";
   }
