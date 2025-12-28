@@ -1,13 +1,11 @@
 """Profile API endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from cryptography.fernet import Fernet
-
-from app.auth import get_current_user, User
+from app.auth import User, get_current_user
 from app.config import get_settings
 from app.database import get_supabase_client
 from app.models import ProfileResponse, ProfileUpdate
-
+from cryptography.fernet import Fernet
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 
@@ -77,10 +75,12 @@ async def update_profile(
         update_data["reddit_username"] = update.reddit_username
 
     if update_data:
-        supabase.table("user_profiles").upsert({
-            "id": user.id,
-            **update_data,
-        }).execute()
+        supabase.table("user_profiles").upsert(
+            {
+                "id": user.id,
+                **update_data,
+            }
+        ).execute()
 
     return await get_profile(user)
 

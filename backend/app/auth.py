@@ -1,17 +1,16 @@
 """Authentication utilities."""
 
 import logging
-import httpx
 from datetime import datetime
 from functools import lru_cache
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status, Query
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt, jwk
-from pydantic import BaseModel
-
+import httpx
 from app.config import get_settings
+from fastapi import Depends, HTTPException, Query, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwk, jwt
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,7 @@ security_optional = HTTPBearer(auto_error=False)
 
 class TokenData(BaseModel):
     """Token payload data."""
+
     user_id: str
     email: Optional[str] = None
     exp: Optional[datetime] = None
@@ -39,6 +39,7 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     """Authenticated user."""
+
     id: str
     email: str
 

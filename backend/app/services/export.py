@@ -44,7 +44,9 @@ class ExportService:
                 lines.append(f"- **Score:** {post.get('score', 0)}")
                 lines.append(f"- **Comments:** {post.get('num_comments', 0)}")
                 lines.append(f"- **Created:** {post.get('created_utc', 'unknown')}")
-                lines.append(f"- **URL:** https://reddit.com{post.get('permalink', '')}")
+                lines.append(
+                    f"- **URL:** https://reddit.com{post.get('permalink', '')}"
+                )
                 lines.append("")
 
                 if post.get("selftext"):
@@ -80,8 +82,12 @@ class ExportService:
                 lines.append("")
                 for post in submissions[:10]:
                     if isinstance(post, dict) and not post.get("error"):
-                        lines.append(f"- [{post.get('title', 'No title')}](https://reddit.com{post.get('permalink', '')})")
-                        lines.append(f"  - Score: {post.get('score', 0)} | Comments: {post.get('num_comments', 0)}")
+                        lines.append(
+                            f"- [{post.get('title', 'No title')}](https://reddit.com{post.get('permalink', '')})"
+                        )
+                        lines.append(
+                            f"  - Score: {post.get('score', 0)} | Comments: {post.get('num_comments', 0)}"
+                        )
                 lines.append("")
 
             comments = data.get("comments", [])
@@ -127,7 +133,9 @@ class ExportService:
         filename = self._generate_filename(job, "md")
         return content.encode("utf-8"), "text/markdown", filename
 
-    def _render_comments_md(self, comments: list, lines: list, depth: int = 0, max_depth: int = 3):
+    def _render_comments_md(
+        self, comments: list, lines: list, depth: int = 0, max_depth: int = 3
+    ):
         """Recursively render comments to markdown."""
         if depth > max_depth:
             return
@@ -142,7 +150,9 @@ class ExportService:
                 score = comment.get("score", 0)
 
                 lines.append(f"{indent}- **{author}** (score: {score})")
-                lines.append(f"{indent}  > {body.replace(chr(10), f'{chr(10)}{indent}  > ')}")
+                lines.append(
+                    f"{indent}  > {body.replace(chr(10), f'{chr(10)}{indent}  > ')}"
+                )
                 lines.append("")
 
                 replies = comment.get("replies", [])

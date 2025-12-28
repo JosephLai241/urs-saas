@@ -1,29 +1,24 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useTheme } from '@/lib/theme'
-import { Button } from './button'
+import { useEffect, useState } from "react";
+import { useTheme } from "@/lib/theme";
+import { Button } from "./button";
 
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Avoid hydration mismatch by rendering a placeholder until mounted
   if (!mounted) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-9 h-9 p-0"
-        disabled
-      >
+      <Button variant="ghost" size="sm" className="w-9 h-9 p-0" disabled>
         <div className="h-4 w-4" />
       </Button>
-    )
+    );
   }
 
   return (
@@ -32,16 +27,16 @@ export function ThemeToggle() {
       size="sm"
       onClick={toggleTheme}
       className="w-9 h-9 p-0"
-      title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {theme === 'dark' ? (
+      {theme === "dark" ? (
         <SunIcon className="h-4 w-4" />
       ) : (
         <MoonIcon className="h-4 w-4" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>
-  )
+  );
 }
 
 function SunIcon({ className }: { className?: string }) {
@@ -66,7 +61,7 @@ function SunIcon({ className }: { className?: string }) {
       <path d="m6.34 17.66-1.41 1.41" />
       <path d="m19.07 4.93-1.41 1.41" />
     </svg>
-  )
+  );
 }
 
 function MoonIcon({ className }: { className?: string }) {
@@ -83,5 +78,5 @@ function MoonIcon({ className }: { className?: string }) {
     >
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
     </svg>
-  )
+  );
 }

@@ -1,89 +1,98 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
-import * as api from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { formatDate } from '@/lib/utils'
-import { Header } from '@/components/layout/Header'
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
+import * as api from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/utils";
+import { Header } from "@/components/layout/Header";
 
 export default function DashboardPage() {
-  const { user, token, logout, isLoading: authLoading } = useAuth()
-  const router = useRouter()
-  const [projects, setProjects] = useState<api.Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [newProjectName, setNewProjectName] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [hasCredentials, setHasCredentials] = useState<boolean | null>(null)
+  const { user, token, logout, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const [projects, setProjects] = useState<api.Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasCredentials, setHasCredentials] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login')
+      router.push("/login");
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (token) {
-      loadData()
+      loadData();
     }
-  }, [token])
+  }, [token]);
 
   const loadData = async () => {
-    if (!token) return
+    if (!token) return;
     try {
       const [projectsData, profileData] = await Promise.all([
         api.getProjects(token),
         api.getProfile(token),
-      ])
-      setProjects(projectsData)
-      setHasCredentials(profileData.has_reddit_credentials)
+      ]);
+      setProjects(projectsData);
+      setHasCredentials(profileData.has_reddit_credentials);
     } catch (error) {
-      console.error('Failed to load data:', error)
+      console.error("Failed to load data:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!token || !newProjectName.trim()) return
+    e.preventDefault();
+    if (!token || !newProjectName.trim()) return;
 
-    setIsCreating(true)
+    setIsCreating(true);
     try {
-      const project = await api.createProject(token, { name: newProjectName.trim() })
-      setProjects([project, ...projects])
-      setNewProjectName('')
-      setShowCreateForm(false)
+      const project = await api.createProject(token, {
+        name: newProjectName.trim(),
+      });
+      setProjects([project, ...projects]);
+      setNewProjectName("");
+      setShowCreateForm(false);
     } catch (error) {
-      console.error('Failed to create project:', error)
+      console.error("Failed to create project:", error);
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
-  }
+  };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (!token || !confirm('Are you sure you want to delete this project?')) return
+    if (!token || !confirm("Are you sure you want to delete this project?"))
+      return;
 
     try {
-      await api.deleteProject(token, projectId)
-      setProjects(projects.filter(p => p.id !== projectId))
+      await api.deleteProject(token, projectId);
+      setProjects(projects.filter((p) => p.id !== projectId));
     } catch (error) {
-      console.error('Failed to delete project:', error)
+      console.error("Failed to delete project:", error);
     }
-  }
+  };
 
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -97,11 +106,16 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
               <span className="text-sm text-yellow-600 dark:text-yellow-400">
-                Reddit API credentials not configured. You won't be able to run scrapes until you add them.
+                Reddit API credentials not configured. You won't be able to run
+                scrapes until you add them.
               </span>
             </div>
             <Link href="/settings">
-              <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-500/50 hover:bg-yellow-500/10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-yellow-600 border-yellow-500/50 hover:bg-yellow-500/10"
+              >
                 Configure Credentials
               </Button>
             </Link>
@@ -114,7 +128,9 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-            <p className="text-muted-foreground">Manage your scraping projects</p>
+            <p className="text-muted-foreground">
+              Manage your scraping projects
+            </p>
           </div>
           <Button variant="reddit" onClick={() => setShowCreateForm(true)}>
             New Project
@@ -125,7 +141,10 @@ export default function DashboardPage() {
         {showCreateForm && (
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <form onSubmit={handleCreateProject} className="flex items-center space-x-4">
+              <form
+                onSubmit={handleCreateProject}
+                className="flex items-center space-x-4"
+              >
                 <Input
                   placeholder="Project name"
                   value={newProjectName}
@@ -133,10 +152,18 @@ export default function DashboardPage() {
                   className="flex-1"
                   autoFocus
                 />
-                <Button type="submit" variant="reddit" disabled={isCreating || !newProjectName.trim()}>
-                  {isCreating ? 'Creating...' : 'Create'}
+                <Button
+                  type="submit"
+                  variant="reddit"
+                  disabled={isCreating || !newProjectName.trim()}
+                >
+                  {isCreating ? "Creating..." : "Create"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
                   Cancel
                 </Button>
               </form>
@@ -146,11 +173,15 @@ export default function DashboardPage() {
 
         {/* Projects List */}
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
+          <div className="text-center py-12 text-muted-foreground">
+            Loading projects...
+          </div>
         ) : projects.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">No projects yet. Create your first project to get started!</p>
+              <p className="text-muted-foreground mb-4">
+                No projects yet. Create your first project to get started!
+              </p>
               <Button variant="reddit" onClick={() => setShowCreateForm(true)}>
                 Create Project
               </Button>
@@ -159,12 +190,17 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <Card key={project.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={project.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <CardDescription>{project.description || 'No description'}</CardDescription>
+                      <CardDescription>
+                        {project.description || "No description"}
+                      </CardDescription>
                     </div>
                     <Badge variant="secondary">{project.job_count} jobs</Badge>
                   </div>
@@ -200,7 +236,9 @@ export default function DashboardPage() {
                     </span>
                     <div className="flex space-x-2">
                       <Link href={`/projects/${project.id}`}>
-                        <Button variant="outline" size="sm">Open</Button>
+                        <Button variant="outline" size="sm">
+                          Open
+                        </Button>
                       </Link>
                       <Button
                         variant="ghost"
@@ -219,5 +257,5 @@ export default function DashboardPage() {
         )}
       </main>
     </div>
-  )
+  );
 }

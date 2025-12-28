@@ -1,10 +1,9 @@
 """Application configuration."""
 
-import os
 from functools import lru_cache
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Get the directory containing this config file
 CONFIG_DIR = Path(__file__).parent.parent

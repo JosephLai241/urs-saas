@@ -2,14 +2,13 @@
 
 import asyncio
 from typing import AsyncGenerator
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import StreamingResponse
 
-from app.auth import get_current_user, get_current_user_from_token_or_query, User
+from app.auth import User, get_current_user, get_current_user_from_token_or_query
 from app.database import get_supabase_client
-from app.models import JobResponse, ExportFormat
+from app.models import ExportFormat, JobResponse
 from app.services.export import ExportService
-
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 
 router = APIRouter()
 
@@ -22,9 +21,13 @@ async def get_job(
     """Get job details and status."""
     supabase = get_supabase_client()
 
-    result = supabase.table("scrape_jobs").select("*").eq(
-        "id", job_id
-    ).eq("user_id", user.id).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not result.data:
         raise HTTPException(
@@ -45,9 +48,13 @@ async def cancel_job(
     supabase = get_supabase_client()
 
     # Verify ownership
-    result = supabase.table("scrape_jobs").select("*").eq(
-        "id", job_id
-    ).eq("user_id", user.id).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not result.data:
         raise HTTPException(
@@ -64,9 +71,11 @@ async def cancel_job(
             background_jobs[job_id].cancel()
             del background_jobs[job_id]
 
-        supabase.table("scrape_jobs").update({
-            "status": "cancelled",
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "status": "cancelled",
+            }
+        ).eq("id", job_id).execute()
     else:
         # Delete completed/failed job
         supabase.table("scrape_jobs").delete().eq("id", job_id).execute()
@@ -81,9 +90,13 @@ async def stream_job_progress(
     supabase = get_supabase_client()
 
     # Verify ownership
-    result = supabase.table("scrape_jobs").select("*").eq(
-        "id", job_id
-    ).eq("user_id", user.id).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not result.data:
         raise HTTPException(
@@ -98,12 +111,15 @@ async def stream_job_progress(
 
         while True:
             # Poll job status
-            result = supabase.table("scrape_jobs").select(
-                "status, progress, error_message"
-            ).eq("id", job_id).execute()
+            result = (
+                supabase.table("scrape_jobs")
+                .select("status, progress, error_message")
+                .eq("id", job_id)
+                .execute()
+            )
 
             if not result.data:
-                yield f"data: {{'error': 'Job not found'}}\n\n"
+                yield "data: {'error': 'Job not found'}\n\n"
                 break
 
             job = result.data[0]
@@ -113,6 +129,7 @@ async def stream_job_progress(
             # Only send update if something changed
             if status != last_status or progress != last_progress:
                 import json
+
                 data = {
                     "status": status,
                     "progress": progress,
@@ -148,9 +165,13 @@ async def export_job(
     """Export job results in various formats."""
     supabase = get_supabase_client()
 
-    result = supabase.table("scrape_jobs").select("*").eq(
-        "id", job_id
-    ).eq("user_id", user.id).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not result.data:
         raise HTTPException(

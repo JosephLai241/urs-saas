@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/lib/auth'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function HomePage() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,16 +46,20 @@ export default function HomePage() {
             Universal Reddit Scraper
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Scrape subreddits, user profiles, and comments with ease.
-            Analyze data, generate insights, and export to JSON.
+            Scrape subreddits, user profiles, and comments with ease. Analyze
+            data, generate insights, and export to JSON.
           </p>
           <div className="flex items-center justify-center space-x-4">
-            <Link href={user ? '/dashboard' : '/signup'}>
+            <Link href={user ? "/dashboard" : "/signup"}>
               <Button variant="reddit" size="lg">
-                {user ? 'Go to Dashboard' : 'Start Scraping'}
+                {user ? "Go to Dashboard" : "Start Scraping"}
               </Button>
             </Link>
-            <a href="https://github.com/JosephLai241/URS" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://github.com/JosephLai241/URS"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button variant="outline" size="lg">
                 View on GitHub
               </Button>
@@ -106,22 +110,33 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
           <p>Built with URS - Universal Reddit Scraper</p>
           <p className="mt-2 text-sm">
-            <a href="https://github.com/JosephLai241/URS" className="text-reddit hover:underline">
+            <a
+              href="https://github.com/JosephLai241/URS"
+              className="text-reddit hover:underline"
+            >
               github.com/JosephLai241/URS
             </a>
           </p>
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
-function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function FeatureCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+}) {
   return (
     <div className="bg-card rounded-lg border border-border p-6 hover:shadow-lg transition-shadow">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="font-semibold text-lg mb-2 text-foreground">{title}</h3>
       <p className="text-muted-foreground">{description}</p>
     </div>
-  )
+  );
 }

@@ -1,12 +1,18 @@
 """Projects API endpoints."""
 
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.auth import get_current_user, User
+from app.auth import User, get_current_user
 from app.database import get_supabase_client
-from app.models import ProjectCreate, ProjectResponse, ProjectUpdate, JobCreate, JobResponse, JobCounts
-
+from app.models import (
+    JobCounts,
+    JobCreate,
+    JobResponse,
+    ProjectCreate,
+    ProjectResponse,
+    ProjectUpdate,
+)
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 
@@ -33,14 +39,21 @@ async def list_projects(user: User = Depends(get_current_user)):
     supabase = get_supabase_client()
 
     # Get projects
-    projects_result = supabase.table("projects").select("*").eq(
-        "user_id", user.id
-    ).order("created_at", desc=True).execute()
+    projects_result = (
+        supabase.table("projects")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+    )
 
     # Get all jobs for user to count per project
-    jobs_result = supabase.table("scrape_jobs").select(
-        "id, project_id, status"
-    ).eq("user_id", user.id).execute()
+    jobs_result = (
+        supabase.table("scrape_jobs")
+        .select("id, project_id, status")
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     # Group jobs by project_id
     jobs_by_project: dict = {}
@@ -56,15 +69,17 @@ async def list_projects(user: User = Depends(get_current_user)):
         jobs = jobs_by_project.get(p["id"], [])
         job_counts = _calculate_job_counts(jobs)
 
-        projects.append(ProjectResponse(
-            id=p["id"],
-            user_id=p["user_id"],
-            name=p["name"],
-            description=p.get("description"),
-            created_at=p["created_at"],
-            job_count=job_counts.total,
-            job_counts=job_counts,
-        ))
+        projects.append(
+            ProjectResponse(
+                id=p["id"],
+                user_id=p["user_id"],
+                name=p["name"],
+                description=p.get("description"),
+                created_at=p["created_at"],
+                job_count=job_counts.total,
+                job_counts=job_counts,
+            )
+        )
 
     return projects
 
@@ -77,11 +92,17 @@ async def create_project(
     """Create a new project."""
     supabase = get_supabase_client()
 
-    result = supabase.table("projects").insert({
-        "user_id": user.id,
-        "name": project.name,
-        "description": project.description,
-    }).execute()
+    result = (
+        supabase.table("projects")
+        .insert(
+            {
+                "user_id": user.id,
+                "name": project.name,
+                "description": project.description,
+            }
+        )
+        .execute()
+    )
 
     p = result.data[0]
     return ProjectResponse(
@@ -103,9 +124,13 @@ async def get_project(
     supabase = get_supabase_client()
 
     # Get project
-    project_result = supabase.table("projects").select("*").eq(
-        "id", project_id
-    ).eq("user_id", user.id).execute()
+    project_result = (
+        supabase.table("projects")
+        .select("*")
+        .eq("id", project_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not project_result.data:
         raise HTTPException(
@@ -116,9 +141,12 @@ async def get_project(
     p = project_result.data[0]
 
     # Get jobs for this project
-    jobs_result = supabase.table("scrape_jobs").select(
-        "id, status"
-    ).eq("project_id", project_id).execute()
+    jobs_result = (
+        supabase.table("scrape_jobs")
+        .select("id, status")
+        .eq("project_id", project_id)
+        .execute()
+    )
 
     job_counts = _calculate_job_counts(jobs_result.data)
 
@@ -143,9 +171,13 @@ async def update_project(
     supabase = get_supabase_client()
 
     # Verify ownership
-    existing = supabase.table("projects").select("id").eq(
-        "id", project_id
-    ).eq("user_id", user.id).execute()
+    existing = (
+        supabase.table("projects")
+        .select("id")
+        .eq("id", project_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not existing.data:
         raise HTTPException(
@@ -173,9 +205,13 @@ async def delete_project(
     """Delete a project and all its jobs."""
     supabase = get_supabase_client()
 
-    result = supabase.table("projects").delete().eq(
-        "id", project_id
-    ).eq("user_id", user.id).execute()
+    result = (
+        supabase.table("projects")
+        .delete()
+        .eq("id", project_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not result.data:
         raise HTTPException(
@@ -193,9 +229,13 @@ async def list_project_jobs(
     supabase = get_supabase_client()
 
     # Verify project ownership
-    project = supabase.table("projects").select("id").eq(
-        "id", project_id
-    ).eq("user_id", user.id).execute()
+    project = (
+        supabase.table("projects")
+        .select("id")
+        .eq("id", project_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not project.data:
         raise HTTPException(
@@ -203,14 +243,22 @@ async def list_project_jobs(
             detail="Project not found",
         )
 
-    result = supabase.table("scrape_jobs").select("*").eq(
-        "project_id", project_id
-    ).order("created_at", desc=True).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("project_id", project_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
 
     return [JobResponse(**job) for job in result.data]
 
 
-@router.post("/{project_id}/jobs", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{project_id}/jobs",
+    response_model=JobResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_job(
     project_id: str,
     job: JobCreate,
@@ -222,9 +270,13 @@ async def create_job(
     supabase = get_supabase_client()
 
     # Verify project ownership
-    project = supabase.table("projects").select("id").eq(
-        "id", project_id
-    ).eq("user_id", user.id).execute()
+    project = (
+        supabase.table("projects")
+        .select("id")
+        .eq("id", project_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not project.data:
         raise HTTPException(
@@ -233,14 +285,20 @@ async def create_job(
         )
 
     # Create job record
-    result = supabase.table("scrape_jobs").insert({
-        "project_id": project_id,
-        "user_id": user.id,
-        "job_type": job.job_type,
-        "config": job.config.model_dump(),
-        "status": "pending",
-        "progress": 0,
-    }).execute()
+    result = (
+        supabase.table("scrape_jobs")
+        .insert(
+            {
+                "project_id": project_id,
+                "user_id": user.id,
+                "job_type": job.job_type,
+                "config": job.config.model_dump(),
+                "status": "pending",
+                "progress": 0,
+            }
+        )
+        .execute()
+    )
 
     job_data = result.data[0]
 

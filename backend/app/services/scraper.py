@@ -100,13 +100,17 @@ class ScraperService:
         elif category == "rising":
             submissions = subreddit.rising(limit=limit)
         elif category == "controversial":
-            submissions = subreddit.controversial(time_filter=time_filter or "all", limit=limit)
+            submissions = subreddit.controversial(
+                time_filter=time_filter or "all", limit=limit
+            )
         elif category == "top":
             submissions = subreddit.top(time_filter=time_filter or "all", limit=limit)
         elif category == "search":
             if not search_query:
                 raise ValueError("search_query is required for search category")
-            submissions = subreddit.search(search_query, limit=limit, time_filter=time_filter or "all")
+            submissions = subreddit.search(
+                search_query, limit=limit, time_filter=time_filter or "all"
+            )
         else:
             raise ValueError(f"Invalid category: {category}")
 

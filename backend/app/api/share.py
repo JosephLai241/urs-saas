@@ -2,13 +2,12 @@
 
 import secrets
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.auth import get_current_user, User
+from app.auth import User, get_current_user
 from app.config import get_settings
 from app.database import get_supabase_client
-from app.models import ShareLinkCreate, ShareLinkResponse, SharedResultResponse
-
+from app.models import SharedResultResponse, ShareLinkResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 
@@ -28,9 +27,13 @@ async def create_share_link(
     settings = get_settings()
 
     # Verify job ownership and completion
-    job_result = supabase.table("scrape_jobs").select("*").eq(
-        "id", job_id
-    ).eq("user_id", user.id).execute()
+    job_result = (
+        supabase.table("scrape_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
 
     if not job_result.data:
         raise HTTPException(
@@ -47,9 +50,13 @@ async def create_share_link(
         )
 
     # Check if share link already exists
-    existing = supabase.table("share_links").select("*").eq(
-        "job_id", job_id
-    ).eq("is_active", True).execute()
+    existing = (
+        supabase.table("share_links")
+        .select("*")
+        .eq("job_id", job_id)
+        .eq("is_active", True)
+        .execute()
+    )
 
     if existing.data:
         link = existing.data[0]
@@ -64,11 +71,17 @@ async def create_share_link(
 
     # Create new share link
     share_token = generate_share_token()
-    result = supabase.table("share_links").insert({
-        "job_id": job_id,
-        "share_token": share_token,
-        "is_active": True,
-    }).execute()
+    result = (
+        supabase.table("share_links")
+        .insert(
+            {
+                "job_id": job_id,
+                "share_token": share_token,
+                "is_active": True,
+            }
+        )
+        .execute()
+    )
 
     link = result.data[0]
     return ShareLinkResponse(
@@ -88,18 +101,20 @@ async def list_share_links(user: User = Depends(get_current_user)):
     settings = get_settings()
 
     # Get all jobs for user, then get share links
-    jobs = supabase.table("scrape_jobs").select("id").eq(
-        "user_id", user.id
-    ).execute()
+    jobs = supabase.table("scrape_jobs").select("id").eq("user_id", user.id).execute()
 
     if not jobs.data:
         return []
 
     job_ids = [j["id"] for j in jobs.data]
 
-    result = supabase.table("share_links").select("*").in_(
-        "job_id", job_ids
-    ).order("created_at", desc=True).execute()
+    result = (
+        supabase.table("share_links")
+        .select("*")
+        .in_("job_id", job_ids)
+        .order("created_at", desc=True)
+        .execute()
+    )
 
     return [
         ShareLinkResponse(
@@ -123,9 +138,12 @@ async def revoke_share_link(
     supabase = get_supabase_client()
 
     # Get share link and verify ownership through job
-    share = supabase.table("share_links").select(
-        "*, scrape_jobs(user_id)"
-    ).eq("id", share_id).execute()
+    share = (
+        supabase.table("share_links")
+        .select("*, scrape_jobs(user_id)")
+        .eq("id", share_id)
+        .execute()
+    )
 
     if not share.data:
         raise HTTPException(
@@ -141,9 +159,11 @@ async def revoke_share_link(
         )
 
     # Deactivate instead of delete
-    supabase.table("share_links").update({
-        "is_active": False,
-    }).eq("id", share_id).execute()
+    supabase.table("share_links").update(
+        {
+            "is_active": False,
+        }
+    ).eq("id", share_id).execute()
 
 
 @router.get("/share/{token}", response_model=SharedResultResponse)
@@ -152,9 +172,13 @@ async def get_shared_result(token: str):
     supabase = get_supabase_client()
 
     # Get share link
-    share = supabase.table("share_links").select("*").eq(
-        "share_token", token
-    ).eq("is_active", True).execute()
+    share = (
+        supabase.table("share_links")
+        .select("*")
+        .eq("share_token", token)
+        .eq("is_active", True)
+        .execute()
+    )
 
     if not share.data:
         raise HTTPException(
@@ -165,9 +189,7 @@ async def get_shared_result(token: str):
     link = share.data[0]
 
     # Get job results
-    job = supabase.table("scrape_jobs").select("*").eq(
-        "id", link["job_id"]
-    ).execute()
+    job = supabase.table("scrape_jobs").select("*").eq("id", link["job_id"]).execute()
 
     if not job.data:
         raise HTTPException(

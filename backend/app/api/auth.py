@@ -2,10 +2,9 @@
 
 import logging
 
+from app.database import get_supabase_client
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-
-from app.database import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +13,14 @@ router = APIRouter()
 
 class LoginRequest(BaseModel):
     """Login request."""
+
     email: str
     password: str
 
 
 class LoginResponse(BaseModel):
     """Login response."""
+
     access_token: str
     token_type: str = "bearer"
     user: dict
@@ -27,6 +28,7 @@ class LoginResponse(BaseModel):
 
 class SignupRequest(BaseModel):
     """Signup request."""
+
     email: str
     password: str
 
@@ -36,10 +38,12 @@ async def login(request: LoginRequest):
     """Login with email and password."""
     try:
         supabase = get_supabase_client()
-        response = supabase.auth.sign_in_with_password({
-            "email": request.email,
-            "password": request.password,
-        })
+        response = supabase.auth.sign_in_with_password(
+            {
+                "email": request.email,
+                "password": request.password,
+            }
+        )
 
         if response.user and response.session:
             return LoginResponse(
@@ -63,16 +67,20 @@ async def signup(request: SignupRequest):
     """Create a new account."""
     try:
         supabase = get_supabase_client()
-        response = supabase.auth.sign_up({
-            "email": request.email,
-            "password": request.password,
-        })
+        response = supabase.auth.sign_up(
+            {
+                "email": request.email,
+                "password": request.password,
+            }
+        )
 
         if response.user and response.session:
             # Create user profile
-            supabase.table("user_profiles").insert({
-                "id": response.user.id,
-            }).execute()
+            supabase.table("user_profiles").insert(
+                {
+                    "id": response.user.id,
+                }
+            ).execute()
 
             return LoginResponse(
                 access_token=response.session.access_token,

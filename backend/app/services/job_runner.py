@@ -6,12 +6,10 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial
-from typing import Optional
 
 import prawcore.exceptions
-
-from app.database import get_supabase_client
 from app.api.profile import decrypt_value
+from app.database import get_supabase_client
 from app.services.scraper import ScraperService
 
 logger = logging.getLogger(__name__)
@@ -33,9 +31,9 @@ def _format_error_message(e: Exception) -> str:
 
     # Authentication/authorization errors
     if isinstance(e, prawcore.exceptions.ResponseException):
-        status_code = getattr(e, 'response', None)
+        status_code = getattr(e, "response", None)
         if status_code:
-            status_code = getattr(status_code, 'status_code', None)
+            status_code = getattr(status_code, "status_code", None)
 
         if status_code == 401:
             return (
@@ -126,18 +124,23 @@ async def start_scrape_job(job_id: str, user_id: str):
 
     # Store task reference (for cancellation)
     from app.main import background_jobs
+
     background_jobs[job_id] = task
 
 
-def _run_scrape_sync(job_id: str, job_type: str, config: dict, scraper: ScraperService, supabase) -> dict:
+def _run_scrape_sync(
+    job_id: str, job_type: str, config: dict, scraper: ScraperService, supabase
+) -> dict:
     """Run the scrape synchronously (called from thread pool)."""
 
     # Progress callback
     def update_progress(current: int, total: int, message: str):
         progress = int((current / total) * 100) if total > 0 else 0
-        supabase.table("scrape_jobs").update({
-            "progress": min(progress, 99),  # Cap at 99 until complete
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "progress": min(progress, 99),  # Cap at 99 until complete
+            }
+        ).eq("id", job_id).execute()
 
     # Execute scrape based on job type
     if job_type == "subreddit":
@@ -172,13 +175,17 @@ async def run_scrape_job(job_id: str, user_id: str):
 
     try:
         # Update status to running
-        supabase.table("scrape_jobs").update({
-            "status": "running",
-            "started_at": datetime.utcnow().isoformat(),
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "status": "running",
+                "started_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("id", job_id).execute()
 
         # Get job details
-        job_result = supabase.table("scrape_jobs").select("*").eq("id", job_id).execute()
+        job_result = (
+            supabase.table("scrape_jobs").select("*").eq("id", job_id).execute()
+        )
         if not job_result.data:
             raise ValueError("Job not found")
 
@@ -187,9 +194,15 @@ async def run_scrape_job(job_id: str, user_id: str):
         config = job["config"]
 
         # Get user's Reddit credentials
-        profile_result = supabase.table("user_profiles").select("*").eq("id", user_id).execute()
-        if not profile_result.data or not profile_result.data[0].get("reddit_client_id"):
-            raise ValueError("Reddit credentials not configured. Please add your credentials in Settings.")
+        profile_result = (
+            supabase.table("user_profiles").select("*").eq("id", user_id).execute()
+        )
+        if not profile_result.data or not profile_result.data[0].get(
+            "reddit_client_id"
+        ):
+            raise ValueError(
+                "Reddit credentials not configured. Please add your credentials in Settings."
+            )
 
         profile = profile_result.data[0]
         client_id = decrypt_value(profile["reddit_client_id"])
@@ -203,23 +216,27 @@ async def run_scrape_job(job_id: str, user_id: str):
         loop = asyncio.get_event_loop()
         result_data = await loop.run_in_executor(
             _executor,
-            partial(_run_scrape_sync, job_id, job_type, config, scraper, supabase)
+            partial(_run_scrape_sync, job_id, job_type, config, scraper, supabase),
         )
 
         # Save results
-        supabase.table("scrape_jobs").update({
-            "status": "completed",
-            "progress": 100,
-            "result_data": result_data,
-            "completed_at": datetime.utcnow().isoformat(),
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "status": "completed",
+                "progress": 100,
+                "result_data": result_data,
+                "completed_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("id", job_id).execute()
 
     except asyncio.CancelledError:
         # Job was cancelled
-        supabase.table("scrape_jobs").update({
-            "status": "cancelled",
-            "completed_at": datetime.utcnow().isoformat(),
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "status": "cancelled",
+                "completed_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("id", job_id).execute()
         raise
 
     except Exception as e:
@@ -229,14 +246,17 @@ async def run_scrape_job(job_id: str, user_id: str):
         logger.error(f"Original exception: {type(e).__name__}: {str(e)}")
         logger.error(traceback.format_exc())
 
-        supabase.table("scrape_jobs").update({
-            "status": "failed",
-            "error_message": error_message,
-            "completed_at": datetime.utcnow().isoformat(),
-        }).eq("id", job_id).execute()
+        supabase.table("scrape_jobs").update(
+            {
+                "status": "failed",
+                "error_message": error_message,
+                "completed_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("id", job_id).execute()
 
     finally:
         # Clean up task reference
         from app.main import background_jobs
+
         if job_id in background_jobs:
             del background_jobs[job_id]
