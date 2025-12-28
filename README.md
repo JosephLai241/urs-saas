@@ -2,6 +2,30 @@
 
 A web-based SAAS platform built around the [URS (Universal Reddit Scraper)](https://github.com/JosephLai241/URS) library. Allows users to scrape Reddit data through a user-friendly interface with background job processing, result viewing, and sharing capabilities.
 
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [1. Database Setup (Supabase)](#1-database-setup-supabase)
+  - [2. Backend Setup](#2-backend-setup)
+  - [3. Frontend Setup](#3-frontend-setup)
+  - [4. Local Development with Docker](#4-local-development-with-docker-alternative)
+- [Development](#development)
+  - [Code Formatting & Linting](#code-formatting--linting)
+  - [Running Tests](#running-tests)
+- [Deployment](#deployment)
+  - [Backend (Railway)](#backend-railway)
+  - [Frontend (Vercel)](#frontend-vercel)
+- [CI/CD](#cicd)
+- [API Endpoints](#api-endpoints)
+- [Troubleshooting](#troubleshooting)
+- [Trade-offs & Design Decisions](#trade-offs--design-decisions)
+- [Project Structure](#project-structure)
+- [License](#license)
+
 ## Features
 
 - **Authentication**: Email/password login via Supabase
