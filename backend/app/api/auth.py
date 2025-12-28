@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
+from app.config import get_settings
 from app.database import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -68,10 +69,15 @@ async def signup(request: SignupRequest):
     """Create a new account."""
     try:
         supabase = get_supabase_client()
+        settings = get_settings()
+
         response = supabase.auth.sign_up(
             {
                 "email": request.email,
                 "password": request.password,
+                "options": {
+                    "email_redirect_to": f"{settings.frontend_url}/login",
+                },
             }
         )
 
