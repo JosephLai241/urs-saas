@@ -23,6 +23,7 @@ A web-based SAAS platform built around the [URS (Universal Reddit Scraper)](http
 - [API Endpoints](#api-endpoints)
 - [Troubleshooting](#troubleshooting)
 - [Trade-offs & Design Decisions](#trade-offs--design-decisions)
+- [Next Steps](#next-steps)
 - [Project Structure](#project-structure)
 - [License](#license)
 
@@ -489,6 +490,67 @@ ______________________________________________________________________
 - Share links use cryptographically random tokens
 - All API endpoints (except share links) require authentication
 - CORS restricted to configured frontend URL
+
+______________________________________________________________________
+
+## Next Steps
+
+### Scrape Reddit Without Credentials
+
+Scrapes are currently limited by the user's account rate limits. These rate limits correspond with the account's karma: the higher the karma, the higher the rate limit. This means the user likely has a low rate limit if they are using a brand new account to scrape Reddit.
+
+Scraping Reddit without using their official API may be a method to bypass this rate limit. However, users may run the risk of running into getting banned by IP, so we'll also need to connect to Reddit through proxies and have a rotating proxy service that we use whenever that happens.
+
+### Job Queue and Background Processing
+
+Use Redis and Celery to implement a job queue and workers to process queued scrape jobs. Route scrape job metadata to Celery, Celery adds the job details to the queue in Redis, then a different Celery worker will pop the job off the queue and kick off the scrape.
+
+If jobs continuously fail after a certain number of retries, we can move that scrape job to a Dead Letter Queue, which may help engineers determine what kind of scrapes are prone to failure and help provide visibility into throughput metrics.
+
+Celery also has a dashboard (Flower) which provides real-time visibility for monitoring Celery tasks, which improves performance monitoring.
+
+### Use WebSockets/Supabase Realtime For Real-Time Scrape Status
+
+The frontend currently polls the API every 3 seconds for the status of scrapes, which increases the load on the API. We could potentially use WebSockets or [Supabase Realtime](https://supabase.com/docs/guides/realtime) to send updates to the frontend whenever the scrape status/progress changes.
+
+### Caching Job Data
+
+The API needs to grab all project and scrape metadata each time the user loads their projects, jobs, user profile, and shared results. Many of these fields are not prone to frequent changes, so we could cache some of this data into Redis.
+
+On first fetch, the API will grab the entry from Supabase/PostgreSQL, copy that entry to the Redis cache, then return the cached data to the user. Then, if any updates were made to these fields, we can update the entry in Supabase/PostgreSQL and invalidate or remove that entry from the Redis cache.
+
+### Database Scaling
+
+There's currently only one PostgreSQL instance that handles everything. We have some options to make it scalable:
+
+- Connection pooling
+
+  - Use Supabase [dedicated pooler](https://supabase.com/docs/guides/database/connecting-to-postgres#dedicated-pooler) to limit database load and reuse sessions
+
+- Create multiple read replicas
+
+  - Write to single primary instance, have multiple read replicas (eventual consistency across all replicas)
+
+- Partitioning
+
+  - Top level partitioning by scrape type (ie. `subreddit`, `redditor`, `comments`)
+    - Second level partitioning by created/scrape date (ie. `2025_dec`)
+
+- Vertical scaling
+
+### Infrastructure Scaling
+
+We need to implement autoscaling for the API service along with standby replicas in case the primary service goes down. Terraform might be a good candidate for deploying the API as an AWS ECS task.
+
+### Observability
+
+There's currently basic logging enabled through Railway, but it would be better to have a more versatile monitoring system in place to keep track of metrics, enable better error tracing, and set up alerting when services aren't running as expected or are performing slower.
+
+We can set up logging to CloudWatch from the ECS tasks, then set up a separate service for metrics.
+
+### Secrets Management
+
+Environment secrets are currently stored as environment variables in Railway or Vercel. It would be better if we were to store the secrets into AWS Secrets Manager for a single source of truth.
 
 ______________________________________________________________________
 
