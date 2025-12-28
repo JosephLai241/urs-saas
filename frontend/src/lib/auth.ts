@@ -32,13 +32,22 @@ const USER_KEY = "urs_user";
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token || token === "undefined") return null;
+  return token;
 }
 
 export function getStoredUser(): User | null {
   if (typeof window === "undefined") return null;
   const user = localStorage.getItem(USER_KEY);
-  return user ? JSON.parse(user) : null;
+  if (!user || user === "undefined") return null;
+  try {
+    return JSON.parse(user);
+  } catch {
+    // Clear corrupted data
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
 }
 
 export function setStoredAuth(token: string, user: User) {
