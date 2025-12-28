@@ -83,10 +83,12 @@ describe("Card component", () => {
   });
 
   it("should apply custom className to Card", () => {
-    render(<Card className="custom-class">Content</Card>);
-    expect(screen.getByText("Content").parentElement).toHaveClass(
-      "custom-class",
+    render(
+      <Card className="custom-class" data-testid="card">
+        Content
+      </Card>,
     );
+    expect(screen.getByTestId("card")).toHaveClass("custom-class");
   });
 });
 

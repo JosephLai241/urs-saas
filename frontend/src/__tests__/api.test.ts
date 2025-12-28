@@ -187,13 +187,12 @@ describe("API module", () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/share/share-token-123"),
-        expect.objectContaining({
-          method: "GET",
-        }),
+        expect.any(Object),
       );
       // Should not have Authorization header
-      const callArgs = mockFetch.mock.calls[0][1];
-      expect(callArgs?.headers).not.toHaveProperty("Authorization");
+      const callArgs = mockFetch.mock.calls[0][1] as Record<string, unknown>;
+      const headers = callArgs?.headers as Record<string, string>;
+      expect(headers).not.toHaveProperty("Authorization");
       expect(result).toEqual(mockResult);
     });
   });

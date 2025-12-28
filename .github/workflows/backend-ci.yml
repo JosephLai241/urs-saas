@@ -58,12 +58,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov httpx
 
-      - name: Run tests
+      - name: Run unit tests
         run: pytest tests/ -v --cov=app --cov-report=term-missing
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          # Unit tests use mocks, these are dummy values
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_SERVICE_KEY: test-service-key
+          SUPABASE_ANON_KEY: test-anon-key
+          JWT_SECRET: test-jwt-secret-for-ci
+          ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw
           FRONTEND_URL: http://localhost:3000
