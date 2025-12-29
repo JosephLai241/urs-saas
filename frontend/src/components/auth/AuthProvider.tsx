@@ -40,14 +40,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   };
 
-  const signup = async (email: string, password: string): Promise<SignupResult> => {
+  const signup = async (
+    email: string,
+    password: string,
+  ): Promise<SignupResult> => {
     const response = await api.signup(email, password);
 
     if (response.requires_confirmation) {
       return {
         success: true,
         requiresConfirmation: true,
-        message: response.message || "Please check your email to confirm your account",
+        message:
+          response.message || "Please check your email to confirm your account",
       };
     }
 
