@@ -35,6 +35,16 @@ class SignupRequest(BaseModel):
     password: str
 
 
+class SignupResponse(BaseModel):
+    """Signup response."""
+
+    access_token: str | None = None
+    token_type: str = "bearer"
+    user: dict | None = None
+    requires_confirmation: bool = False
+    message: str | None = None
+
+
 @router.post("/login", response_model=LoginResponse)
 async def login(request: LoginRequest):
     """Login with email and password."""
@@ -64,7 +74,7 @@ async def login(request: LoginRequest):
     )
 
 
-@router.post("/signup", response_model=LoginResponse)
+@router.post("/signup", response_model=SignupResponse)
 async def signup(request: SignupRequest):
     """Create a new account."""
     try:
@@ -89,7 +99,7 @@ async def signup(request: SignupRequest):
                 }
             ).execute()
 
-            return LoginResponse(
+            return SignupResponse(
                 access_token=response.session.access_token,
                 user={
                     "id": response.user.id,
@@ -98,12 +108,10 @@ async def signup(request: SignupRequest):
             )
         elif response.user:
             # User created but needs email confirmation
-            raise HTTPException(
-                status_code=status.HTTP_200_OK,
-                detail="Please check your email to confirm your account",
+            return SignupResponse(
+                requires_confirmation=True,
+                message="Please check your email to confirm your account",
             )
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Signup failed for {request.email}: {e}")
         raise HTTPException(

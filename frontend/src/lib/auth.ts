@@ -7,11 +7,17 @@ export interface User {
   email: string;
 }
 
+export interface SignupResult {
+  success: boolean;
+  requiresConfirmation: boolean;
+  message?: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<SignupResult>;
   logout: () => void;
   isLoading: boolean;
 }

@@ -50,11 +50,18 @@ export async function login(email: string, password: string) {
   });
 }
 
-export async function signup(email: string, password: string) {
-  return fetchAPI<{
-    access_token: string;
-    user: { id: string; email: string };
-  }>("/api/auth/signup", {
+export interface SignupResponse {
+  access_token: string | null;
+  user: { id: string; email: string } | null;
+  requires_confirmation: boolean;
+  message: string | null;
+}
+
+export async function signup(
+  email: string,
+  password: string,
+): Promise<SignupResponse> {
+  return fetchAPI<SignupResponse>("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });

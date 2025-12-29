@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   AuthContext,
   User,
+  SignupResult,
   getStoredToken,
   getStoredUser,
   setStoredAuth,
@@ -39,12 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string): Promise<SignupResult> => {
     const response = await api.signup(email, password);
-    setToken(response.access_token);
-    setUser(response.user);
-    setStoredAuth(response.access_token, response.user);
-    router.push("/dashboard");
+
+    if (response.requires_confirmation) {
+      return {
+        success: true,
+        requiresConfirmation: true,
+        message: response.message || "Please check your email to confirm your account",
+      };
+    }
+
+    if (response.access_token && response.user) {
+      setToken(response.access_token);
+      setUser(response.user);
+      setStoredAuth(response.access_token, response.user);
+      router.push("/dashboard");
+    }
+
+    return {
+      success: true,
+      requiresConfirmation: false,
+    };
   };
 
   const logout = () => {
